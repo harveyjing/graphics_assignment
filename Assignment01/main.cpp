@@ -51,12 +51,27 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
     // Create the projection matrix for the given parameters.
     // Then return it.
 
-    Eigen::Matrix4f translate;
-    translate << zNear, 0, 0, 0,
+    Eigen::Matrix4f persp2ortho;
+    persp2ortho << zNear, 0, 0, 0,
         0, zNear, 0, 0,
         0, 0, zFar + zNear, -zFar*zNear,
         0, 0, 1, 0;
-    projection = translate * projection;
+
+    float l,r,t,b,n,f;
+    t = tan(eye_fov/2) * zNear;
+    b = -t;
+    r = aspect_ratio * t;
+    l = -r;
+    f = zFar;
+    n = zNear;
+
+    Eigen::Matrix4f orthographic;
+    orthographic << 2/(r - l), 0, 0, -(r + l)/2,
+        0, 2/(t - b), 0, -(t + b)/2,
+        0, 0, 2/(n - f), -(n + f)/2,
+        0, 0, 0, 1;
+    
+    projection = orthographic * persp2ortho * projection;
 
     return projection;
 }
@@ -110,7 +125,7 @@ int main(int argc, const char** argv)
 
         r.set_model(get_model_matrix(angle));
         r.set_view(get_view_matrix(eye_pos));
-        r.set_projection(get_projection_matrix(45, 1, 0.1, 50));
+        r.set_projection(get_projection_matrix(4, 1, 0.1, 50));
 
         r.draw(pos_id, ind_id, rst::Primitive::Triangle);
 
